@@ -1,0 +1,36 @@
+name: AWS OIDC Demo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  s3-list:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::529088286453:role/IAM_Role_For_GitHub_Actions
+          aws-region: ap-south-1
+
+      - name: List S3 buckets and store to file
+        run: |
+          aws s3 ls > s3-buckets.txt
+          cat s3-buckets.txt
+
+      - name: Commit file to repo
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add s3-buckets.txt
+          git commit -m "Updated S3 bucket list" || echo "No changes"
+          git push
